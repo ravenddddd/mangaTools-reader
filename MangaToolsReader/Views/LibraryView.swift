@@ -91,16 +91,23 @@ struct LibraryView: View {
             RemoteImage(path: gallery.paths?.cover)
                 .aspectRatio(3.0 / 4.0, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            // Two reserved lines and a reserved line for the circle: every card
+            // is then the same height, whether or not its title is long or its
+            // studio is set.
             Text(gallery.displayTitle)
                 .font(.subheadline.weight(.medium))
-                .lineLimit(2)
-            if let circle = gallery.circle {
-                Text(circle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
+                .multilineTextAlignment(.leading)
+                .lineLimit(2, reservesSpace: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(gallery.circle ?? " ")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func load() async {
