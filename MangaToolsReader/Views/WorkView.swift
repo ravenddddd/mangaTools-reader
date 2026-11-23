@@ -49,14 +49,6 @@ struct WorkView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: OffsetKey.self,
-                        value: proxy.frame(in: .named("work")).minY
-                    )
-                }
-                .frame(height: 0)
-
                 hero
                 metaPills
                 statsCard
@@ -80,6 +72,7 @@ struct WorkView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(scrolled ? .visible : .hidden, for: .navigationBar)
         .toolbarColorScheme(scrolled ? nil : .dark, for: .navigationBar)
+        .tint(scrolled ? nil : .white)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text(gallery.displayTitle)
@@ -118,42 +111,50 @@ struct WorkView: View {
     // MARK: - Header
 
     private var hero: some View {
-        ZStack(alignment: .bottomLeading) {
-            HeroBackdrop(path: gallery.paths?.cover)
-
-            LinearGradient(
-                stops: [
-                    .init(color: .clear, location: 0.55),
-                    .init(color: Color(.systemGroupedBackground).opacity(0.85), location: 0.86),
-                    .init(color: Color(.systemGroupedBackground), location: 1),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            HStack(alignment: .bottom, spacing: 13) {
-                RemoteImage(path: gallery.paths?.cover)
-                    .frame(width: 96, height: 128)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .shadow(color: .black.opacity(0.35), radius: 12, x: 0, y: 8)
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(gallery.displayTitle)
-                        .font(.title3.weight(.bold))
-                        .lineLimit(2)
-                    if let circle = gallery.circle {
-                        Text(circle)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Spacer(minLength: 0)
+        HeroBackdrop(path: gallery.paths?.cover)
+            .frame(height: 300)
+            .overlay(alignment: .bottom) {
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0.55),
+                        .init(color: Color(.systemGroupedBackground).opacity(0.85), location: 0.86),
+                        .init(color: Color(.systemGroupedBackground), location: 1),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
-        }
-        .frame(height: 300)
-        .clipped()
+            .overlay(alignment: .bottomLeading) {
+                HStack(alignment: .bottom, spacing: 13) {
+                    RemoteImage(path: gallery.paths?.cover)
+                        .frame(width: 96, height: 128)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .shadow(color: .black.opacity(0.35), radius: 12, x: 0, y: 8)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(gallery.displayTitle)
+                            .font(.title3.weight(.bold))
+                            .lineLimit(2)
+                        if let circle = gallery.circle {
+                            Text(circle)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
+            .clipped()
+            .background {
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: OffsetKey.self,
+                        value: proxy.frame(in: .named("work")).minY
+                    )
+                }
+            }
     }
 
     // MARK: - Facts
@@ -439,6 +440,11 @@ struct WorkView: View {
 
 /// The cover, blown up and blurred, as the header's background. Falls back to a
 /// soft gradient until the image arrives (and for a gallery without a cover).
+///
+/// The image is framed by a `GeometryReader`, not left to `scaledToFill`'s own
+/// idea of its size: a `scaledToFill` image reports the height its aspect ratio
+/// needs (390 × ~430 for a 3:4 cover), and an enclosing `ZStack` would lay the
+/// title out against *that* height — below the 300 pt the header clips at.
 private struct HeroBackdrop: View {
     let path: String?
 
@@ -446,25 +452,30 @@ private struct HeroBackdrop: View {
     @State private var image: UIImage?
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.11, green: 0.14, blue: 0.25),
-                    Color(red: 0.48, green: 0.25, blue: 0.37),
-                    Color(red: 0.85, green: 0.55, blue: 0.37),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            if let image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .blur(radius: 36)
-                    .overlay(Color.black.opacity(0.12))
+        GeometryReader { proxy in
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.11, green: 0.14, blue: 0.25),
+                        Color(red: 0.48, green: 0.25, blue: 0.37),
+                        Color(red: 0.85, green: 0.55, blue: 0.37),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .clipped()
+                        .blur(radius: 36)
+                        .overlay(Color.black.opacity(0.12))
+                }
             }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .clipped()
         }
-        .clipped()
         .task(id: path) {
             image = nil
             guard let path, let config = session.config else { return }
