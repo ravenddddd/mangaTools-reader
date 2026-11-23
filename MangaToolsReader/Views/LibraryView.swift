@@ -9,6 +9,8 @@ struct LibraryView: View {
     @State private var errorMessage: String?
     @State private var search = ""
     @State private var showsSettings = false
+    @State private var randomWork: Gallery?
+    @State private var rolling = false
 
     private let columns = [GridItem(.adaptive(minimum: 140), spacing: 12)]
 
@@ -30,7 +32,22 @@ struct LibraryView: View {
                 .navigationDestination(for: Gallery.self) { gallery in
                     WorkView(gallery: gallery)
                 }
+                .navigationDestination(item: $randomWork) { gallery in
+                    WorkView(gallery: gallery)
+                }
                 .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            Task { await roll() }
+                        } label: {
+                            if rolling {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "shuffle")
+                            }
+                        }
+                        .disabled(rolling || galleries.isEmpty)
+                    }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             showsSettings = true
@@ -120,5 +137,19 @@ struct LibraryView: View {
             errorMessage = error.localizedDescription
         }
         loading = false
+    }
+
+    /// A random marked gallery, picked by the server (count, then a random page
+    /// of one) rather than from the shelf in memory.
+    private func roll() async {
+        guard let client = session.client, !rolling else { return }
+        rolling = true
+        errorMessage = nil
+        do {
+            randomWork = try await client.randomGallery()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        rolling = false
     }
 }

@@ -63,6 +63,39 @@ struct StashClient {
         return data.findGalleries.galleries
     }
 
+    /// One random marked gallery.
+    ///
+    /// Stash has no random sort, so the count comes first and the pick is a
+    /// random page of size one — the cost is two calls, and the result is a
+    /// gallery the caller has not seen rather than one already in memory.
+    func randomGallery() async throws -> Gallery? {
+        let filter = """
+        gallery_filter: { custom_fields: [{ field: "\(Fields.mark)", modifier: NOT_NULL }] }
+        """
+        let countText = """
+        query { findGalleries(\(filter), filter: { per_page: 0 }) { count } }
+        """
+        let counted: CountData = try await query(countText, as: CountData.self)
+        let count = counted.findGalleries.count
+        guard count > 0 else { return nil }
+
+        let page = Int.random(in: 1...count)
+        let text = """
+        query {
+          findGalleries(
+            \(filter),
+            filter: { per_page: 1, page: \(page), sort: "title", direction: ASC }
+          ) {
+            galleries {
+        \(Self.galleryFields)
+            }
+          }
+        }
+        """
+        let data: WorksData = try await query(text, as: WorksData.self)
+        return data.findGalleries.galleries.first
+    }
+
     /// The selection both gallery queries share.
     private static let galleryFields = """
               id
@@ -124,6 +157,11 @@ struct StashClient {
     private struct ImagesData: Decodable {
         let findImages: Images
         struct Images: Decodable { let images: [StashImage] }
+    }
+
+    private struct CountData: Decodable {
+        let findGalleries: Count
+        struct Count: Decodable { let count: Int }
     }
 
     private func query<T: Decodable>(

@@ -7,7 +7,6 @@ struct WorkView: View {
     let gallery: Gallery
 
     @EnvironmentObject private var session: Session
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
     @State private var images: [StashImage] = []
@@ -40,35 +39,43 @@ struct WorkView: View {
     private var chapterTotal: Int { isSingleBook ? 1 : storedChapters.count }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    hero
-                    metaPills
-                    statsCard
-                    tagsSection
-                    synopsisSection
-                    chaptersSection
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .font(.footnote)
-                            .foregroundStyle(.red)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 12)
-                    }
-                    Color.clear.frame(height: 28)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                hero
+                metaPills
+                statsCard
+                tagsSection
+                synopsisSection
+                chaptersSection
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
                 }
+                Color.clear.frame(height: 28)
             }
-            .background(Color(.systemGroupedBackground))
-            .ignoresSafeArea(edges: .top)
-
-            topBar
-                .padding(.horizontal, 16)
-                .padding(.top, 6)
         }
+        .background(Color(.systemGroupedBackground))
+        .ignoresSafeArea(edges: .top)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .navigationBar)
+        // The bar stays for its back button, the edge-swipe it keeps alive and
+        // the status bar's colour; only its background goes. On iOS 26 the
+        // system draws the items as Liquid Glass, so they float over the
+        // artwork on their own.
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button("Open in Stash") { openInStash() }
+                } label: {
+                    Image(systemName: "ellipsis")
+                }
+            }
+        }
         .task { await load() }
         .sheet(isPresented: $showsGroup) {
             GroupWorksView(group: gallery.translationGroup ?? "", excluding: gallery.id)
@@ -80,34 +87,6 @@ struct WorkView: View {
                 chapters: storedChapters,
                 chapterIndex: chapter.index
             )
-        }
-    }
-
-    /// Back and the menu, as liquid-glass circles floating over the artwork.
-    private var topBar: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
-                    .glassEffect(.regular.interactive(), in: .circle)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Menu {
-                Button("Open in Stash") { openInStash() }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 40, height: 40)
-                    .glassEffect(.regular.interactive(), in: .circle)
-            }
         }
     }
 
