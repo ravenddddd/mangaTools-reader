@@ -83,8 +83,7 @@ struct WorkView: View {
         }
     }
 
-    /// Back and the menu, as frosted circles floating over the artwork — the
-    /// same idea as the reader's chrome, and legible over any cover.
+    /// Back and the menu, as liquid-glass circles floating over the artwork.
     private var topBar: some View {
         HStack {
             Button {
@@ -94,7 +93,7 @@ struct WorkView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.primary)
                     .frame(width: 40, height: 40)
-                    .background { glassCircle }
+                    .glassEffect(.regular.interactive(), in: .circle)
             }
             .buttonStyle(.plain)
 
@@ -107,16 +106,9 @@ struct WorkView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.primary)
                     .frame(width: 40, height: 40)
-                    .background { glassCircle }
+                    .glassEffect(.regular.interactive(), in: .circle)
             }
         }
-    }
-
-    private var glassCircle: some View {
-        Circle()
-            .fill(.ultraThinMaterial)
-            .overlay(Circle().strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5))
-            .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 3)
     }
 
     // MARK: - Header

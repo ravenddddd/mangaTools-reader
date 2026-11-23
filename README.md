@@ -29,7 +29,8 @@ read — chapters are drawn from the deduplicated image list.
 
 ## Requirements
 
-- iOS 17 or newer.
+- iOS 26 or newer. The app targets the current SDK on purpose: the work page's
+  back and menu buttons use Liquid Glass, so there is no older fallback.
 - Stash 0.31 or newer, reachable from the phone.
 - The mangaTools plugin installed, with at least one gallery marked as manga.
 - An API key if Stash requires authentication (Settings → Security).
@@ -63,7 +64,8 @@ open MangaToolsReader.xcodeproj
 
 A signed build for your own device is the normal Xcode flow: pick a team, pick
 `MangaToolsReader`, run. For CI, push — `.github/workflows/ipa.yml` builds on
-`macos-15`, packages `Payload/MangaToolsReader.app` into an IPA and uploads it;
+`macos-26` (Xcode 26 with the iOS 26 SDK), packages
+`Payload/MangaToolsReader.app` into an IPA and uploads it;
 a `v*` tag also attaches it to a GitHub release.
 
 ### Codemagic
