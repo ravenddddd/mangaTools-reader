@@ -1,0 +1,45 @@
+name: MangaToolsReader
+
+options:
+  bundleIdPrefix: com.ravenddddd
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "17.0"
+
+targets:
+  MangaToolsReader:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: MangaToolsReader
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ravenddddd.mangatools-reader
+        PRODUCT_NAME: MangaToolsReader
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: NO
+    info:
+      path: MangaToolsReader/Info.plist
+      properties:
+        CFBundleDisplayName: mangaTools
+        UILaunchScreen: {}
+        ITSAppUsesNonExemptEncryption: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # Stash on a home network is almost always plain HTTP.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+    scheme:
+      gatherCoverageData: false
+      testTargets: []
