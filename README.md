@@ -63,6 +63,15 @@ A signed build for your own device is the normal Xcode flow: pick a team, pick
 `macos-15`, packages `Payload/MangaToolsReader.app` into an IPA and uploads it;
 a `v*` tag also attaches it to a GitHub release.
 
+### Codemagic
+
+`codemagic.yaml` runs the same build on [Codemagic](https://codemagic.io)'s
+Mac mini M2 — usually a much shorter wait than a GitHub-hosted macOS runner
+(the free plan includes 500 build minutes a month, one build at a time).
+Sign in with GitHub, add this repository, and Codemagic picks the workflow up;
+builds start on every push, and the IPA is on the build's **Artifacts** tab.
+Free-plan artifacts are kept for 30 days.
+
 The first launch asks for the server address and the API key. The address is
 kept in preferences, the key in the keychain.
 
