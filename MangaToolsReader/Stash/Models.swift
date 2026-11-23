@@ -1,6 +1,6 @@
 import Foundation
 
-struct NamedEntity: Codable, Hashable {
+struct NamedEntity: Codable, Identifiable, Hashable {
     let id: String
     let name: String
 }
