@@ -7,6 +7,7 @@ struct WorkView: View {
     let gallery: Gallery
 
     @EnvironmentObject private var session: Session
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
     @State private var images: [StashImage] = []
@@ -16,20 +17,12 @@ struct WorkView: View {
     @State private var showsGroup = false
     @State private var synopsisExpanded = false
     @State private var tagsExpanded = false
-    @State private var scrolled = false
 
     private static let tagLimit = 6
 
     private struct OpenChapter: Identifiable {
         let index: Int
         var id: Int { index }
-    }
-
-    private struct OffsetKey: PreferenceKey {
-        static var defaultValue: CGFloat = 0
-        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-            value = nextValue()
-        }
     }
 
     // MARK: - Derived
@@ -47,53 +40,35 @@ struct WorkView: View {
     private var chapterTotal: Int { isSingleBook ? 1 : storedChapters.count }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                hero
-                metaPills
-                statsCard
-                tagsSection
-                synopsisSection
-                chaptersSection
-                if let errorMessage {
-                    Text(errorMessage)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
+        ZStack(alignment: .top) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    hero
+                    metaPills
+                    statsCard
+                    tagsSection
+                    synopsisSection
+                    chaptersSection
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+                    }
+                    Color.clear.frame(height: 28)
                 }
-                Color.clear.frame(height: 28)
             }
+            .background(Color(.systemGroupedBackground))
+            .ignoresSafeArea(edges: .top)
+
+            topBar
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
         }
-        .coordinateSpace(name: "work")
-        .background(Color(.systemGroupedBackground))
-        .ignoresSafeArea(edges: .top)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(scrolled ? .visible : .hidden, for: .navigationBar)
-        .toolbarColorScheme(scrolled ? nil : .dark, for: .navigationBar)
-        .tint(scrolled ? nil : .white)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text(gallery.displayTitle)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .opacity(scrolled ? 1 : 0)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Open in Stash") { openInStash() }
-                } label: {
-                    Image(systemName: "ellipsis")
-                }
-            }
-        }
-        .onPreferenceChange(OffsetKey.self) { value in
-            let next = value < -60
-            if next != scrolled {
-                scrolled = next
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .task { await load() }
         .sheet(isPresented: $showsGroup) {
             GroupWorksView(group: gallery.translationGroup ?? "", excluding: gallery.id)
@@ -106,6 +81,42 @@ struct WorkView: View {
                 chapterIndex: chapter.index
             )
         }
+    }
+
+    /// Back and the menu, as frosted circles floating over the artwork — the
+    /// same idea as the reader's chrome, and legible over any cover.
+    private var topBar: some View {
+        HStack {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 40, height: 40)
+                    .background { glassCircle }
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            Menu {
+                Button("Open in Stash") { openInStash() }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 40, height: 40)
+                    .background { glassCircle }
+            }
+        }
+    }
+
+    private var glassCircle: some View {
+        Circle()
+            .fill(.ultraThinMaterial)
+            .overlay(Circle().strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 3)
     }
 
     // MARK: - Header
@@ -147,14 +158,6 @@ struct WorkView: View {
                 .padding(.bottom, 8)
             }
             .clipped()
-            .background {
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: OffsetKey.self,
-                        value: proxy.frame(in: .named("work")).minY
-                    )
-                }
-            }
     }
 
     // MARK: - Facts
