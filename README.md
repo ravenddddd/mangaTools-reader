@@ -6,7 +6,10 @@ server component and nothing is written back.
 
 - **Shelf** — every gallery the plugin marked as manga, by cover, searchable by
   title, circle or tag.
-- **Work** — the gallery's chapters, as the plugin stores them.
+- **Work** — the cover as a header, then the facts the plugin keeps: language,
+  translation group, censorship (and *Original* when nothing was translated),
+  page/chapter/release numbers, tags, the synopsis and the chapter list. The
+  group's pill lists the other works the same group translated.
 - **Reader** — one chapter, one page at a time, swiped horizontally, with pinch
   and double-tap zoom. The reading position is remembered per gallery.
 

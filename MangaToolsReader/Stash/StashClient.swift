@@ -28,6 +28,43 @@ struct StashClient {
             filter: { per_page: -1, sort: "title", direction: ASC }
           ) {
             galleries {
+        \(Self.galleryFields)
+            }
+          }
+        }
+        """
+        let data: WorksData = try await query(text, as: WorksData.self)
+        return data.findGalleries.galleries
+    }
+
+    /// The galleries one translation group worked on.
+    ///
+    /// `value` is Stash's `[Any!]`, so the query takes `[Any!]` as its variable
+    /// rather than `[String!]`: the server rejects the narrower type in that
+    /// position.
+    func galleries(inGroup group: String) async throws -> [Gallery] {
+        let text = """
+        query Works($v: [Any!]) {
+          findGalleries(
+            gallery_filter: { custom_fields: [{ field: "\(Fields.group)", value: $v, modifier: EQUALS }] }
+            filter: { per_page: -1, sort: "date", direction: DESC }
+          ) {
+            galleries {
+        \(Self.galleryFields)
+            }
+          }
+        }
+        """
+        let data: WorksData = try await query(
+            text,
+            variables: ["v": [group]],
+            as: WorksData.self
+        )
+        return data.findGalleries.galleries
+    }
+
+    /// The selection both gallery queries share.
+    private static let galleryFields = """
               id
               title
               details
@@ -40,13 +77,7 @@ struct StashClient {
               paths { cover }
               files { path }
               folder { path }
-            }
-          }
-        }
-        """
-        let data: WorksData = try await query(text, as: WorksData.self)
-        return data.findGalleries.galleries
-    }
+    """
 
     /// One gallery's images in Stash's path order — the order its own lightbox
     /// and the plugin's chapters both count in.

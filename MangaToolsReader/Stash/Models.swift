@@ -39,7 +39,33 @@ struct Gallery: Codable, Identifiable, Hashable {
         return name
     }
 
-    var language: String? { customFields?[Fields.language]?.string }
+    var languageName: String? { LanguageName.display(customFields?[Fields.language]?.string) }
+
+    var translationGroup: String? {
+        guard let raw = customFields?[Fields.group]?.string else { return nil }
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
+    }
+
+    var censorshipLabel: String? { Censorship.label(customFields?[Fields.censorship]?.string) }
+
+    var isUncensored: Bool { Censorship.isUncensored(customFields?[Fields.censorship]?.string) }
+
+    /// The plugin's two ways of saying "nothing was translated": its own field,
+    /// and the language code that means the work has no text of its own.
+    var isOriginal: Bool {
+        if let value = customFields?[Fields.original]?.string, !value.isEmpty {
+            return true
+        }
+        return customFields?[Fields.language]?.string == "zxx"
+    }
+
+    /// The release year, when Stash has a date for the work.
+    var year: String? {
+        guard let date, date.count >= 4 else { return nil }
+        let prefix = String(date.prefix(4))
+        return Int(prefix) != nil ? prefix : nil
+    }
 
     /// The plugin's chapters, or nil when this gallery has none this reader can
     /// read (and so is one book over the whole gallery).
